@@ -1,0 +1,61 @@
+name: Build Asan Hisab APK from source ZIP
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main, master]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: asan-hisab-apk-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build-apk:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      - name: Verify source archive
+        run: |
+          if [ ! -f asan-hisab-source.zip ]; then
+            echo 'Missing asan-hisab-source.zip in repository root.'
+            exit 1
+          fi
+      - name: Extract Flutter source
+        run: |
+          mkdir -p "$RUNNER_TEMP/asan-source"
+          unzip -q asan-hisab-source.zip -d "$RUNNER_TEMP/asan-source"
+          ROOT="$RUNNER_TEMP/asan-source/asan_next"
+          if [ ! -f "$ROOT/pubspec.yaml" ]; then
+            ROOT="$RUNNER_TEMP/asan-source"
+          fi
+          if [ ! -f "$ROOT/pubspec.yaml" ]; then
+            echo 'pubspec.yaml not found inside source ZIP.'
+            exit 1
+          fi
+          cp -a "$ROOT"/. "$GITHUB_WORKSPACE/"
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: "3.41.0"
+          channel: stable
+          cache: true
+      - name: Prepare Android project
+        run: ./tool/prepare_android.sh
+      - name: Get dependencies
+        run: flutter pub get
+      - name: Analyze Dart code
+        run: dart analyze
+      - name: Run Flutter tests
+        run: flutter test
+      - name: Build debug APK
+        run: flutter build apk --debug
+      - name: Upload APK artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: asan-hisab-debug-apk-${{ github.run_id }}
+          path: build/app/outputs/flutter-apk/app-debug.apk
+          if-no-files-found: error
+          retention-days: 7
