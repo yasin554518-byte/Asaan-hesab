@@ -1,0 +1,86 @@
+<!doctype html>
+<html lang="ps" dir="rtl">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#123b35">
+<title>آسان حساب</title>
+<style>
+:root{--green:#123b35;--gold:#d7ad55;--bg:#f3f6f5;--card:#fff;--text:#162522;--muted:#61716d;--red:#b83b42}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);font-family:system-ui,-apple-system,"Noto Naskh Arabic",sans-serif;color:var(--text)}
+header{background:var(--green);color:white;padding:20px 16px 18px;border-radius:0 0 22px 22px}
+header h1{margin:0;font-size:26px}header p{margin:6px 0 0;color:#dbe9e5;font-size:14px}
+main{max-width:720px;margin:auto;padding:14px}
+.row{display:flex;gap:8px;flex-wrap:wrap}.card{background:var(--card);border-radius:16px;padding:15px;margin:10px 0;box-shadow:0 3px 14px #102b2510}
+.stats{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}.stat{background:white;padding:13px;border-radius:14px}.stat small{color:var(--muted)}.stat strong{display:block;font-size:20px;margin-top:5px}
+input,select,button{font:inherit;border-radius:10px;padding:11px;border:1px solid #d8e0dd;width:100%;background:white;color:var(--text)}
+button{border:0;background:var(--green);color:white;font-weight:650;cursor:pointer}button.gold{background:var(--gold);color:#17231f}button.light{background:#e8efed;color:var(--green)}button.danger{background:#fff0f0;color:var(--red);border:1px solid #f0cccc}
+label{font-size:13px;color:var(--muted);display:block;margin:7px 0 5px}.field{flex:1;min-width:130px}.customer{display:flex;justify-content:space-between;gap:10px;align-items:center}.customer h3{margin:0 0 4px;font-size:17px}.muted{color:var(--muted);font-size:13px}.balance{font-weight:750;color:var(--green);white-space:nowrap}.hidden{display:none!important}.entry{border-top:1px solid #edf0ef;padding:10px 0}.entry:first-child{border-top:0}.pill{font-size:12px;padding:4px 8px;border-radius:99px;background:#e7f1ed;color:var(--green)}.tabs{display:flex;gap:8px;margin:12px 0}.tabs button{flex:1}.tabs button.active{background:var(--gold);color:#17231f}.notice{background:#fff8e6;border:1px solid #f0dfad;padding:10px;border-radius:12px;font-size:13px;color:#6b5418}
+footer{text-align:center;color:var(--muted);font-size:12px;padding:20px}
+</style>
+</head>
+<body>
+<header><h1>آسان حساب</h1><p>د پور، تادیې او پاتې حساب ساده دفتر</p></header>
+<main>
+<div class="stats">
+ <div class="stat"><small>ټول مشتریان</small><strong id="count">۰</strong></div>
+ <div class="stat"><small>ټول پاتې پور</small><strong id="total">۰</strong></div>
+</div>
+<div class="tabs">
+ <button id="tabCustomers" class="active" onclick="showTab('customers')">مشتریان</button>
+ <button id="tabLedger" class="light" onclick="showTab('ledger')">د مشتری حساب</button>
+ <button class="light" onclick="showTab('backup')">بیک اپ</button>
+</div>
+<section id="customers">
+ <div class="card">
+  <h2 style="margin:0 0 8px;font-size:19px">نوی مشتری</h2>
+  <label>د مشتری نوم</label><input id="newName" placeholder="د مشتری نوم ولیکئ">
+  <label>د اړیکې شمېره (اختیاري)</label><input id="newPhone" inputmode="tel" placeholder="شمېره">
+  <div style="margin-top:10px"><button onclick="addCustomer()">مشتری اضافه کړه</button></div>
+ </div>
+ <div class="card"><div class="row" style="align-items:center"><h2 style="margin:0;font-size:19px;flex:1">د مشتریانو لېست</h2><button class="light" style="width:auto" onclick="renderCustomers()">تازه کول</button></div>
+ <label>لټون</label><input id="search" placeholder="د نوم له مخې لټون..." oninput="renderCustomers()"><div id="customerList"></div></div>
+</section>
+<section id="ledger" class="hidden">
+ <div class="card">
+  <div class="row" style="align-items:end"><div class="field"><label>مشتری وټاکئ</label><select id="customerSelect" onchange="renderLedger()"></select></div></div>
+  <div class="stats" style="margin-top:12px"><div class="stat"><small>ټول پور</small><strong id="debts">۰</strong></div><div class="stat"><small>ټولې تادیې</small><strong id="payments">۰</strong></div></div>
+  <div class="stat" style="margin-top:10px"><small>پاتې حساب</small><strong id="remaining">۰</strong></div>
+ </div>
+ <div class="card">
+  <h2 style="font-size:19px;margin:0">نوې معامله</h2>
+  <label>د معاملې ډول</label><select id="entryType"><option value="debt">قرض اضافه</option><option value="payment">رسید / تادیه</option></select>
+  <div class="row"><div class="field"><label>مبلغ</label><input id="amount" type="number" min="1" step="any" inputmode="decimal" placeholder="0"></div><div class="field"><label>نېټه</label><input id="date" type="date"></div></div>
+  <label>یادښت (اختیاري)</label><input id="note" placeholder="د معاملې تفصیل">
+  <div style="margin-top:10px"><button onclick="addEntry()">معامله ثبت کړه</button></div>
+ </div>
+ <div class="card"><h2 style="font-size:19px;margin:0 0 8px">د معاملو تاریخچه</h2><div id="entries"></div></div>
+</section>
+<section id="backup" class="hidden">
+ <div class="card"><h2 style="font-size:19px;margin-top:0">بیک اپ او بېرته راوستل</h2><p class="muted">معلومات په همدې براوزر/موبایل کې ساتل کېږي. د خوندي ساتلو لپاره بیک اپ فایل ډاونلوډ کړئ.</p><button onclick="exportData()">بیک اپ ډاونلوډ کړه</button>
+ <label style="margin-top:16px">د بیک اپ فایل بېرته داخلول</label><input id="importFile" type="file" accept=".json,application/json"><button class="light" style="margin-top:8px" onclick="importData()">بیک اپ بېرته راوړه</button></div>
+ <div class="notice">مهم: دا لومړنۍ آف‌لاین نسخه ده. معلومات لا د څو موبایلونو ترمنځ په اتومات ډول نه همغږي کېږي. بیک اپ فایل په خوندي ځای کې وساتئ.</div>
+</section>
+<footer>آسان حساب · د حساب کتاب لومړنۍ نسخه</footer>
+</main>
+<script>
+const KEY='asanHisabDataV1';
+let db={customers:[]};
+const fmt=n=>new Intl.NumberFormat('ps-AF',{maximumFractionDigits:2}).format(Number(n)||0);
+function load(){try{const x=JSON.parse(localStorage.getItem(KEY)||'null');if(x&&Array.isArray(x.customers))db=x}catch(e){};document.getElementById('date').value=new Date().toISOString().slice(0,10);renderAll()}
+function save(){localStorage.setItem(KEY,JSON.stringify(db));renderAll()}
+function customer(id){return db.customers.find(c=>c.id===id)}
+function totals(c){let debt=0,pay=0;(c.entries||[]).forEach(e=>e.type==='debt'?debt+=e.amount:pay+=e.amount);return {debt,pay,balance:debt-pay}}
+function addCustomer(){let name=document.getElementById('newName').value.trim();if(!name){alert('د مشتری نوم ولیکئ');return}db.customers.unshift({id:crypto.randomUUID?crypto.randomUUID():String(Date.now()),name,phone:document.getElementById('newPhone').value.trim(),entries:[]});document.getElementById('newName').value='';document.getElementById('newPhone').value='';save();showTab('ledger');document.getElementById('customerSelect').value=db.customers[0].id;renderLedger()}
+function renderAll(){renderCustomers();renderSelect();renderLedger();let total=db.customers.reduce((s,c)=>s+Math.max(0,totals(c).balance),0);document.getElementById('count').textContent=fmt(db.customers.length);document.getElementById('total').textContent=fmt(total)}
+function renderCustomers(){let q=(document.getElementById('search')?.value||'').trim().toLowerCase();let el=document.getElementById('customerList');if(!el)return;let list=db.customers.filter(c=>c.name.toLowerCase().includes(q)||c.phone.includes(q));el.innerHTML=list.length?list.map(c=>{let t=totals(c);return `<div class="entry customer"><div><h3>${esc(c.name)}</h3><div class="muted">${esc(c.phone||'د اړیکې شمېره نشته')}</div></div><div style="text-align:left"><div class="balance">${fmt(t.balance)}</div><button class="light" style="margin-top:6px;width:auto;padding:7px 10px" onclick="openCustomer('${c.id}')">حساب</button></div></div>`}).join(''):'<p class="muted">مشتری نه دی ثبت شوی.</p>'}
+function renderSelect(){let s=document.getElementById('customerSelect');let old=s.value;s.innerHTML=db.customers.map(c=>`<option value="${c.id}">${esc(c.name)}</option>`).join('');if(customer(old))s.value=old}
+function openCustomer(id){showTab('ledger');document.getElementById('customerSelect').value=id;renderLedger()}
+function renderLedger(){let id=document.getElementById('customerSelect').value,c=customer(id);if(!c){['debts','payments','remaining'].forEach(x=>document.getElementById(x).textContent='۰');document.getElementById('entries').innerHTML='<p class="muted">لومړی مشتری اضافه کړئ.</p>';return}let t=totals(c);document.getElementById('debts').textContent=fmt(t.debt);document.getElementById('payments').textContent=fmt(t.pay);document.getElementById('remaining').textContent=fmt(t.balance);document.getElementById('entries').innerHTML=(c.entries||[]).length?[...c.entries].reverse().map(e=>`<div class="entry"><div class="row" style="align-items:center"><span class="pill">${e.type==='debt'?'قرض اضافه':'تادیه'}</span><strong style="margin-right:auto">${fmt(e.amount)}</strong></div><div class="muted" style="margin-top:5px">${esc(e.date||'')} · ${esc(e.note||'بې یادښته')}</div><div class="muted">پاتې حساب: ${fmt(e.balanceAfter)}</div></div>`).join(''):'<p class="muted">تر اوسه معامله نشته.</p>'}
+function addEntry(){let c=customer(document.getElementById('customerSelect').value);if(!c){alert('لومړی مشتری اضافه کړئ');return}let amount=Number(document.getElementById('amount').value);if(!Number.isFinite(amount)||amount<=0){alert('سم مبلغ ولیکئ');return}let type=document.getElementById('entryType').value;let before=totals(c).balance;if(type==='payment'&&amount>before){if(!confirm('تادیه له پاتې پور څخه زیاته ده. بیا هم ثبت شي؟'))return}c.entries.push({id:String(Date.now()),type,amount,date:document.getElementById('date').value,note:document.getElementById('note').value.trim(),balanceAfter:before+(type==='debt'?amount:-amount)});document.getElementById('amount').value='';document.getElementById('note').value='';save()}
+function showTab(tab){['customers','ledger','backup'].forEach(x=>document.getElementById(x).classList.toggle('hidden',x!==tab));[['customers','tabCustomers'],['ledger','tabLedger']].forEach(([x,b])=>{let el=document.getElementById(b);el.classList.toggle('active',x===tab);el.classList.toggle('light',x!==tab)});}
+function exportData(){let b=new Blob([JSON.stringify(db,null,2)],{type:'application/json'}),a=document.createElement('a');a.href=URL.createObjectURL(b);a.download='asan-hisab-backup-'+new Date().toISOString().slice(0,10)+'.json';a.click();URL.revokeObjectURL(a.href)}
+function importData(){let f=document.getElementById('importFile').files[0];if(!f){alert('لومړی بیک اپ فایل وټاکئ');return}let r=new FileReader();r.onload=()=>{try{let x=JSON.parse(r.result);if(!x||!Array.isArray(x.customers))throw 0;if(!confirm('اوسني معلومات به د بیک اپ معلوماتو سره بدل شي. دوام ورکړو؟'))return;db=x;save();alert('بیک اپ بېرته راوستل شو')}catch(e){alert('دا سم آسان حساب بیک اپ فایل نه دی')}};r.readAsText(f)}
+function esc(s){return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
+load();
+</script>
+</body></html>
